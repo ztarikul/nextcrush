@@ -1,9 +1,10 @@
-import React from "react";
+import React, { Suspense } from "react";
 import getPost from "../../../lib/getPost";
 import getPostComments from "../../../lib/getPostComment";
+import Comments from "@/app/components/Comments";
 
 export async function generateMetadata(props) {
-  const { id } = props.params;
+  const { id } = await props.params;
   const post = await getPost(id);
 
   return {
@@ -13,7 +14,7 @@ export async function generateMetadata(props) {
 }
 
 export default async function PostPage(props) {
-  const { id } = props.params;
+  const { id } = await props.params;
 
   // const post = await getPost(id);
   // const comments = await getPostComments(id);
@@ -23,23 +24,19 @@ export default async function PostPage(props) {
   const postPromise = getPost(id);
   const commentsPromise = getPostComments(id);
 
-  const [post, comments] = await Promise.all([postPromise, commentsPromise]);
+  // const [post, comments] = await Promise.all([postPromise, commentsPromise]);
+  // For suspense
+
+  const post = await postPromise;
 
   return (
     <div className="mt-6">
       <h2 className="text-blue-500">{post.title}</h2>
       <p className="mt-3">{post.body}</p>
       <hr />
-      <div className="mt-6">
-        <h1>Comments</h1>
-        <ul>
-          {comments.map((comment) => (
-            <li className="mb-2" key={comment.id}>
-              {comment.body}
-            </li>
-          ))}
-        </ul>
-      </div>
+      <Suspense fallback="Loading Comments ... ">
+        <Comments promise={commentsPromise} />
+      </Suspense>
     </div>
   );
 }
